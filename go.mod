@@ -1,4 +1,4 @@
-module github.com/tejzpr/go-vedic-astro-charts/v1
+module github.com/tejzpr/go-vedic-astro-charts
 
 go 1.24.0
 
