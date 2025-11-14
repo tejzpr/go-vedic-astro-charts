@@ -17,7 +17,7 @@ A Go library for generating Vedic astrology charts in different styles: North In
 ## Installation
 
 ```bash
-go get github.com/tejzpr/go-vedic-astro-charts/v1
+go get github.com/tejzpr/go-vedic-astro-charts
 ```
 
 ## Usage
@@ -29,7 +29,7 @@ import (
     "encoding/base64"
     "fmt"
     "os"
-    "github.com/tejzpr/go-vedic-astro-charts/v1"
+    "github.com/tejzpr/go-vedic-astro-charts"
 )
 
 func main() {
