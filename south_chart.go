@@ -279,17 +279,18 @@ func GenerateSouthChart(input ChartInput) ([]byte, error) {
 
 		// Collect planets, grahas, and upagrahas in this house based on their Rashi
 		// Planets should be placed in the house that contains their rashi
-		var planetsInHouse []string
+		var regularPlanets []string
+		var specialLagnas []string
 
 		// Add planets and lagna - treat lagna just like any other planet
 		// First add lagna if this is the lagna rashi position
 		if input.Lagna != nil && lagnaRashi > 0 && rashiNum == lagnaRashi {
 			abbrev := GetPlanetDisplayName("lagna", input.Lagna)
 			// Lagna is never retrograde or combust (it's a point, not a planet)
-			planetsInHouse = append(planetsInHouse, abbrev)
+			regularPlanets = append(regularPlanets, abbrev)
 		}
 
-		// Add regular planets
+		// Add regular planets and separate special lagnas
 		for planetName, planet := range input.Planets {
 			planetRashiNum := RashiToNumber(planet.Rashi)
 			// Check if this planet's rashi matches the rashi number of this position
@@ -302,25 +303,49 @@ func GenerateSouthChart(input ChartInput) ([]byte, error) {
 				if planet.IsCombust {
 					abbrev += "C"
 				}
-				planetsInHouse = append(planetsInHouse, abbrev)
+
+				// Separate special lagnas from regular planets
+				if IsSpecialLagnaAbbrev(abbrev, input) {
+					specialLagnas = append(specialLagnas, abbrev)
+				} else {
+					regularPlanets = append(regularPlanets, abbrev)
+				}
 			}
 		}
 
 		// Draw planets in top center of the box with larger font
 		// Load larger Matangi font for planets from embedded data
 		loadMatangiBold(dc, 22)
-		planetX := float64(rect.Min.X+rect.Max.X) / 2 // Center horizontally
+		centerX := float64(rect.Min.X+rect.Max.X) / 2 // Center horizontally
 		planetY := float64(rect.Min.Y) + 25           // Top with padding
-		for i, planetAbbrev := range planetsInHouse {
+
+		// Calculate spacing: planets on left, special lagnas on right
+		leftX := centerX - 25  // Left side for regular planets
+		rightX := centerX + 25 // Right side for special lagnas
+
+		// Draw regular planets on the left
+		for i, planetAbbrev := range regularPlanets {
 			// Check if this is Ascendant and set color to saffron
 			if strings.Contains(planetAbbrev, "Asc") {
-				// Saffron color for Ascendant (orange-yellow)
 				dc.SetRGB(1.0, 0.6, 0.2) // Saffron
 			} else {
-				// Black color for other planets
-				dc.SetRGB(0, 0, 0)
+				dc.SetRGB(0, 0, 0) // Black
 			}
-			dc.DrawStringAnchored(planetAbbrev, planetX, planetY+float64(i*25), 0.5, 0.5)
+			dc.DrawStringAnchored(planetAbbrev, leftX, planetY+float64(i*25), 1.0, 0.5)
+		}
+
+		// Draw special lagnas on the right, matching up with planets by index
+		maxItems := len(regularPlanets)
+		if len(specialLagnas) > maxItems {
+			maxItems = len(specialLagnas)
+		}
+
+		for i := 0; i < maxItems; i++ {
+			// Draw special lagna if available at this index
+			if i < len(specialLagnas) {
+				dc.SetRGB(1.0, 0.85, 0.0) // Yellow for special lagnas
+				dc.DrawStringAnchored(specialLagnas[i], rightX, planetY+float64(i*25), 0.0, 0.5)
+			}
 		}
 		// Reset color back to black after drawing planets
 		dc.SetRGB(0, 0, 0)

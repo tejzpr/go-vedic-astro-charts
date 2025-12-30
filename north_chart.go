@@ -198,16 +198,17 @@ func GenerateNorthChart(input ChartInput) ([]byte, error) {
 
 	// Draw planets for position 1 (lagna position)
 	position1Rashi := getRashiForPosition(1)
-	planetsInPosition1 := []string{}
+	regularPlanets1 := []string{}
+	specialLagnas1 := []string{}
 
 	// Add lagna if it's in this rashi
 	if input.Lagna != nil && position1Rashi == lagnaRashiNum {
 		abbrev := GetPlanetDisplayName("lagna", input.Lagna)
 		// Lagna is never retrograde or combust (it's a point, not a planet)
-		planetsInPosition1 = append(planetsInPosition1, abbrev)
+		regularPlanets1 = append(regularPlanets1, abbrev)
 	}
 
-	// Add regular planets in this rashi
+	// Add regular planets in this rashi, separate special lagnas
 	for planetName, planet := range input.Planets {
 		planetRashiNum := RashiToNumber(planet.Rashi)
 		if planetRashiNum > 0 && planetRashiNum == position1Rashi {
@@ -218,22 +219,45 @@ func GenerateNorthChart(input ChartInput) ([]byte, error) {
 			if planet.IsCombust {
 				abbrev += "C"
 			}
-			planetsInPosition1 = append(planetsInPosition1, abbrev)
+			
+			// Separate special lagnas from regular planets
+			if IsSpecialLagnaAbbrev(abbrev, input) {
+				specialLagnas1 = append(specialLagnas1, abbrev)
+			} else {
+				regularPlanets1 = append(regularPlanets1, abbrev)
+			}
 		}
 	}
 
 	// Draw planets near position 1 (lagna position at 400, 300)
-	if len(planetsInPosition1) > 0 {
-		planetX := 380.0
+	if len(regularPlanets1) > 0 || len(specialLagnas1) > 0 {
+		leftX := 360.0  // Left side for regular planets
+		rightX := 400.0 // Right side for special lagnas
 		planetY := 140.0
-		for i, planetAbbrev := range planetsInPosition1 {
+		
+		// Draw regular planets on the left
+		for i, planetAbbrev := range regularPlanets1 {
 			// Check if this is Ascendant and set color to saffron
 			if strings.Contains(planetAbbrev, "Asc") {
 				dc.SetRGB(1.0, 0.6, 0.2) // Saffron
 			} else {
 				dc.SetRGB(0, 0, 0) // Black
 			}
-			dc.DrawStringAnchored(planetAbbrev, planetX, planetY+float64(i*20), 0.0, 0.5)
+			dc.DrawStringAnchored(planetAbbrev, leftX, planetY+float64(i*20), 1.0, 0.5)
+		}
+		
+		// Draw special lagnas on the right, matching up with planets by index
+		maxItems := len(regularPlanets1)
+		if len(specialLagnas1) > maxItems {
+			maxItems = len(specialLagnas1)
+		}
+		
+		for i := 0; i < maxItems; i++ {
+			// Draw special lagna if available at this index
+			if i < len(specialLagnas1) {
+				dc.SetRGB(1.0, 0.85, 0.0) // Yellow for special lagnas
+				dc.DrawStringAnchored(specialLagnas1[i], rightX, planetY+float64(i*20), 0.0, 0.5)
+			}
 		}
 		dc.SetRGB(0, 0, 0) // Reset to black
 	}
@@ -243,16 +267,17 @@ func GenerateNorthChart(input ChartInput) ([]byte, error) {
 		positionNum := i + 2
 		rashiNum := getRashiForPosition(positionNum)
 
-		planetsInPosition := []string{}
+		regularPlanets := []string{}
+		specialLagnas := []string{}
 
 		// Add lagna if it's in this rashi
 		if input.Lagna != nil && rashiNum == lagnaRashiNum {
 			abbrev := GetPlanetDisplayName("lagna", input.Lagna)
 			// Lagna is never retrograde or combust (it's a point, not a planet)
-			planetsInPosition = append(planetsInPosition, abbrev)
+			regularPlanets = append(regularPlanets, abbrev)
 		}
 
-		// Add regular planets in this rashi
+		// Add regular planets in this rashi, separate special lagnas
 		for planetName, planet := range input.Planets {
 			planetRashiNum := RashiToNumber(planet.Rashi)
 			if planetRashiNum > 0 && planetRashiNum == rashiNum {
@@ -263,35 +288,60 @@ func GenerateNorthChart(input ChartInput) ([]byte, error) {
 				if planet.IsCombust {
 					abbrev += "C"
 				}
-				planetsInPosition = append(planetsInPosition, abbrev)
+				
+				// Separate special lagnas from regular planets
+				if IsSpecialLagnaAbbrev(abbrev, input) {
+					specialLagnas = append(specialLagnas, abbrev)
+				} else {
+					regularPlanets = append(regularPlanets, abbrev)
+				}
 			}
 		}
 
 		// Draw planets near this rashi number
-		if len(planetsInPosition) > 0 {
+		if len(regularPlanets) > 0 || len(specialLagnas) > 0 {
 			// Use specific planet position if set, otherwise calculate offset
-			var planetX, planetY float64
+			var baseX, baseY float64
 			if pos.planetX != 0.0 || pos.planetY != 0.0 {
-				planetX = pos.planetX
-				planetY = pos.planetY
+				baseX = pos.planetX
+				baseY = pos.planetY
 			} else {
 				// Calculate offset position for planets (to the right of the number)
 				// Use the rotation angle to determine offset direction
 				angleRad := pos.angle * math.Pi / 180
 				offsetX := 30.0 * math.Cos(angleRad)
 				offsetY := 30.0 * math.Sin(angleRad)
-				planetX = pos.x + offsetX
-				planetY = pos.y + offsetY
+				baseX = pos.x + offsetX
+				baseY = pos.y + offsetY
 			}
 
-			for j, planetAbbrev := range planetsInPosition {
+			// Calculate left and right positions
+			leftX := baseX - 20  // Left side for regular planets
+			rightX := baseX + 20 // Right side for special lagnas
+
+			// Draw regular planets on the left
+			for j, planetAbbrev := range regularPlanets {
 				// Check if this is Ascendant and set color to saffron
 				if strings.Contains(planetAbbrev, "Asc") {
 					dc.SetRGB(1.0, 0.6, 0.2) // Saffron
 				} else {
 					dc.SetRGB(0, 0, 0) // Black
 				}
-				dc.DrawStringAnchored(planetAbbrev, planetX, planetY+float64(j*20), 0.0, 0.5)
+				dc.DrawStringAnchored(planetAbbrev, leftX, baseY+float64(j*20), 1.0, 0.5)
+			}
+
+			// Draw special lagnas on the right, matching up with planets by index
+			maxItems := len(regularPlanets)
+			if len(specialLagnas) > maxItems {
+				maxItems = len(specialLagnas)
+			}
+
+			for j := 0; j < maxItems; j++ {
+				// Draw special lagna if available at this index
+				if j < len(specialLagnas) {
+					dc.SetRGB(1.0, 0.85, 0.0) // Yellow for special lagnas
+					dc.DrawStringAnchored(specialLagnas[j], rightX, baseY+float64(j*20), 0.0, 0.5)
+				}
 			}
 			dc.SetRGB(0, 0, 0) // Reset to black
 		}

@@ -37,11 +37,12 @@ const (
 
 // Planet represents a planet in the chart
 type Planet struct {
-	Rashi        string `json:"rashi"`
-	IsRetrograde bool   `json:"is_retrograde"`
-	IsCombust    bool   `json:"is_combust"`
-	IsUpagraha   bool   `json:"upagraha,omitempty"`
-	Display      string `json:"display,omitempty"` // Custom display name
+	Rashi          string `json:"rashi"`
+	IsRetrograde   bool   `json:"is_retrograde"`
+	IsCombust      bool   `json:"is_combust"`
+	IsUpagraha     bool   `json:"upagraha,omitempty"`
+	Display        string `json:"display,omitempty"` // Custom display name
+	IsSpecialLagna bool   `json:"is_special_lagna,omitempty"`
 }
 
 // ChartInput contains all the data needed to generate a chart
@@ -131,6 +132,26 @@ func GetPlanetDisplayName(planetName string, planet *Planet) string {
 		return planet.Display
 	}
 	return GetPlanetAbbreviation(planetName)
+}
+
+// IsSpecialLagnaAbbrev checks if an abbreviation corresponds to a special lagna
+// by looking through the input.Planets map
+func IsSpecialLagnaAbbrev(abbrev string, input ChartInput) bool {
+	// Remove retrograde and combust suffixes for matching
+	abbrevClean := strings.TrimSuffix(abbrev, "R")
+	abbrevClean = strings.TrimSuffix(abbrevClean, "C")
+
+	// Check all planets to see if any has this display name and IsSpecialLagna flag
+	for _, planet := range input.Planets {
+		if planet != nil && planet.IsSpecialLagna {
+			// Get the expected display name for this planet
+			// We need to find which planet key this is, but we can check by Display field
+			if planet.Display == abbrevClean {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // GenerateChart generates a chart image and returns it as a base64-encoded PNG string
