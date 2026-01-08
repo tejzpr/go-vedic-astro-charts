@@ -132,27 +132,27 @@ func GenerateNorthChart(input ChartInput) ([]byte, error) {
 		planetX, planetY float64 // Planet display position
 	}{
 		// Position 2 (next after lagna, counter-clockwise)
-		{220.0, 160.0, -5.0, 180.0, 70.0},
+		{220.0, 160.0, -5.0, 210.0, 70.0},  // Top left - correct, keep as is
 		// Position 3
-		{70.0, 300.0, -1.0, 60.0, 150.0},
+		{70.0, 300.0, -1.0, 65.0, 150.0},   // Keep as is
 		// Position 4
-		{220.0, 500.0, -1.0, 200.0, 310.0},
+		{220.0, 500.0, -1.0, 210.0, 330.0}, // Changed planetY from 310.0 to 330.0 (move 20px down)
 		// Position 5
-		{70.0, 670.0, -1.0, 60.0, 500.0},
+		{70.0, 670.0, -1.0, 65.0, 540.0},   // Changed planetY from 520.0 to 540.0 (move 20px more down)
 		// Position 6
-		{130.0, 720.0, -1.0, 180.0, 640.0},
+		{130.0, 720.0, -1.0, 125.0, 680.0}, // Changed planetY from 660.0 to 680.0 (move 20px more down)
 		// Position 7
-		{400.0, 680.0, -1.0, 380.0, 480.0},
+		{400.0, 680.0, -1.0, 395.0, 520.0}, // Changed planetY from 500.0 to 520.0 (move 20px more down)
 		// Position 8
-		{650.0, 725.0, -1.0, 540.0, 660.0},
+		{650.0, 725.0, -1.0, 645.0, 660.0}, // Keep as is
 		// Position 9
-		{730.0, 660.0, -1.0, 690.0, 500.0},
+		{730.0, 660.0, -1.0, 725.0, 500.0}, // Keep as is
 		// Position 10
-		{580.0, 500.0, -1.0, 550.0, 330.0},
+		{580.0, 500.0, -1.0, 575.0, 330.0}, // Keep as is
 		// Position 11
-		{720.0, 300.0, -1.0, 700.0, 130.0},
+		{720.0, 300.0, -1.0, 705.0, 130.0}, // Changed planetX from 715.0 to 705.0 (move 10px left)
 		// Position 12
-		{580.0, 160.0, -1.0, 520.0, 70.0},
+		{580.0, 160.0, -1.0, 575.0, 70.0},  // Top left - correct, keep as is
 	}
 
 	// Set up font for rashi numbers
@@ -316,7 +316,7 @@ func GenerateNorthChart(input ChartInput) ([]byte, error) {
 			}
 
 			// Calculate left and right positions
-			leftX := baseX - 20  // Left side for regular planets
+			leftX := baseX  // Use baseX directly without additional offset (planets are already positioned correctly)
 			rightX := baseX + 20 // Right side for special lagnas
 
 			// Draw regular planets on the left
